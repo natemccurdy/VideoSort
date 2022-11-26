@@ -1138,6 +1138,12 @@ def guess_info(filename):
         else:
             guess['title'] = remove_year(guess['title'])
 
+    # Fix behavior where guessit thinks the season of a 1-year miniseries is
+    # the same as the year. For example, guessit incorrectly thinks
+    # The.Pacific.2010.EP09.720p.mkv is in season 2010 rather than season 1.
+    if guess['type'] == 'episode' and (guess.get('year') == guess.get('season')):
+      guess['season'] = 1
+
     if guess['type'] == 'movie':
         date = guess.get('date')
         if date:
