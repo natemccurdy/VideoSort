@@ -184,7 +184,8 @@
     "id": "group-20-40",
     "INPUTFILE": "Fargo.1996.REMASTERED.BluRay.720p.H264-20-40.mp4",
     "OUTPUTFILE": "/movies/Fargo (1996).mp4",
-    "NZBPO_MOVIESFORMAT": "%t (%y).%ext"
+    "NZBPO_MOVIESFORMAT": "%t (%y).%ext",
+    "NZBPP_CATEGORY": "movies"
   },
   {
     "id": "multi-cat",

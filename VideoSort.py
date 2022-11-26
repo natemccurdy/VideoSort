@@ -78,6 +78,17 @@
 # Category names must match categories defined in NZBGet.
 #TvCategories=tv
 
+# List of Movie categories.
+#
+# Comma separated list of categories for Movies. VideoSort automatically
+# distinguishes movies from series and dated TV shows. But it needs help
+# to distinguish movies from other TV shows because they are named
+# using same conventions. If a download has associated category listed in
+# option <MovieCategories>, VideoSort uses this information.
+#
+# Category names must match categories defined in NZBGet.
+#MovieCategories=movies
+
 # File extensions for video files.
 #
 # Only files with these extensions are processed. Extensions must
@@ -303,7 +314,7 @@ required_options = ('NZBPO_MoviesDir', 'NZBPO_SeriesDir', 'NZBPO_DatedDir',
     'NZBPO_OtherTvDir', 'NZBPO_VideoExtensions', 'NZBPO_SatelliteExtensions', 'NZBPO_MinSize',
     'NZBPO_MoviesFormat', 'NZBPO_SeriesFormat', 'NZBPO_OtherTvFormat', 'NZBPO_DatedFormat',
     'NZBPO_EpisodeSeparator', 'NZBPO_Overwrite', 'NZBPO_Cleanup', 'NZBPO_LowerWords', 'NZBPO_UpperWords',
-    'NZBPO_TvCategories', 'NZBPO_Preview', 'NZBPO_Verbose')
+    'NZBPO_TvCategories', 'NZBPO_MovieCategories', 'NZBPO_Preview', 'NZBPO_Verbose')
 for optname in required_options:
     if (not optname.upper() in os.environ):
         print('[ERROR] Option %s is missing in configuration file. Please check script settings' % optname[6:])
@@ -336,8 +347,15 @@ upper_words=os.environ['NZBPO_UPPERWORDS'].replace(' ', '').split(',')
 series_year=os.environ.get('NZBPO_SERIESYEAR', 'yes') == 'yes'
 
 tv_categories=os.environ['NZBPO_TVCATEGORIES'].lower().split(',')
+movie_categories=os.environ['NZBPO_MOVIECATEGORIES'].lower().split(',')
 category=os.environ.get('NZBPP_CATEGORY', '')
 force_tv=category.lower() in tv_categories
+force_movie=category.lower() in movie_categories
+
+if force_tv and force_movie:
+    print('[WARNING] *** Force TV and Force Movie have been set. Check for duplicate categories. ***')
+    sys.exit(POSTPROCESS_ERROR)
+
 
 dnzb_headers=os.environ.get('NZBPO_DNZBHEADERS', 'yes') == 'yes'
 dnzb_proper_name=os.environ.get('NZBPR__DNZB_PROPERNAME', '')
@@ -356,6 +374,9 @@ if preview:
     print('[WARNING] *** PREVIEW MODE ON - NO CHANGES TO FILE SYSTEM ***')
 
 if verbose and force_tv:
+    print('[INFO] Forcing TV sorting (category: %s)' % category)
+
+if verbose and force_movie:
     print('[INFO] Forcing TV sorting (category: %s)' % category)
 
 # List of moved files (source path)
@@ -1091,7 +1112,14 @@ def guess_info(filename):
     if verbose:
         print('Guessing: %s' % guessfilename)
 
-    guess = guessit.api.guessit(unicode(guessfilename), {'allowed_languages': [], 'allowed_countries': []})
+    if force_movie:
+        guessit_type = 'movie'
+    elif force_tv:
+        guessit_type = 'episode'
+    else:
+        guessit_type = None
+
+    guess = guessit.api.guessit(unicode(guessfilename), {'allowed_languages': [], 'allowed_countries': [], 'type': guessit_type})
 
     if verbose:
         print(guess)

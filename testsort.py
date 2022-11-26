@@ -57,6 +57,7 @@ def set_defaults():
     os.environ['NZBPO_EPISODESEPARATOR'] = '-'
     os.environ['NZBPO_MINSIZE'] = '0'
     os.environ['NZBPO_TVCATEGORIES'] = 'tv'
+    os.environ['NZBPO_MOVIECATEGORIES'] = 'movies'
     os.environ['NZBPO_MOVIESFORMAT'] = '%fn'
     os.environ['NZBPO_OTHERTVFORMAT'] = '%fn'
     os.environ['NZBPO_SERIESFORMAT'] = '%fn'
