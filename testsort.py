@@ -105,6 +105,7 @@ def run_test(testobj):
     proc = subprocess.Popen(['python', root_dir + '/VideoSort.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ.copy())
     out, err = proc.communicate()
     out += err
+    out = out.decode()
     ret = proc.returncode
     if verbose:
         print('Return code: %i' % ret)
@@ -112,12 +113,12 @@ def run_test(testobj):
     dest = ''
 
     if ret == 93:
-        for line in out.split(b'\n'):
-            if line.startswith(b'destination path: '):
-                line = line[len(b'destination path: '):]
-                if line.startswith(root_dir.encode()):
-                    line = line[len(root_dir.encode()):]
-                dest = line.replace(b'\\', b'/').decode()
+        for line in out.splitlines():
+            if line.startswith('destination path: '):
+                line = line[len('destination path: '):]
+                if line.startswith(root_dir):
+                    line = line[len(root_dir):]
+                dest = line.replace('\\', '/')
         success = dest == output_file and output_file != ''
 
     if success:
@@ -127,10 +128,9 @@ def run_test(testobj):
             print('********************************************************')
             print('*** FAILURE')
             print(out)
-            print('*** FAILURE')
-            print('id: %s' % testobj['id'])
-            print('expected   : %s' % output_file)
-            print('destination: %s' % dest)
+            print(f"id: {testobj['id']}")
+            print(f"expected   : {output_file}")
+            print(f"destination: {dest}")
             print('********************************************************')
             sys.exit(1)
         else:
