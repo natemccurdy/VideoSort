@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # VideoSort post-processing script for NZBGet.
 #
