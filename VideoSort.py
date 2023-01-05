@@ -18,8 +18,8 @@
 # along with the program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 import difflib
-import guessit
 import locale
 import os
 from os.path import dirname
@@ -27,6 +27,9 @@ import re
 import shutil
 import sys
 import traceback
+
+sys.path.insert(0, dirname(__file__) + "/lib")
+import guessit  # noqa: E402
 
 ##############################################################################
 ### NZBGET POST-PROCESSING SCRIPT                                           ###
@@ -286,8 +289,6 @@ import traceback
 pass  # https://github.com/psf/black/issues/1245
 # fmt: on
 
-sys.path.insert(0, dirname(__file__) + "/lib")
-
 
 try:
     unicode
@@ -305,19 +306,24 @@ if "NZBOP_SCRIPTDIR" not in os.environ:
     print("This script is supposed to be called from nzbget (11.0 or later).")
     sys.exit(POSTPROCESS_ERROR)
 
+totalstatus = os.getenv("NZBPP_TOTALSTATUS")
+
 # Check if directory still exist (for post-process again)
-if not os.path.exists(os.environ["NZBPP_DIRECTORY"]):
-    print("[INFO] Destination directory %s doesn't exist, exiting" % os.environ["NZBPP_DIRECTORY"])
+if (
+    totalstatus
+    and (totalstatus == "DELETED")
+    and (not os.path.exists(os.environ["NZBPP_DIRECTORY"]))
+):
+    print(
+        f"[WARNING] Destination directory {os.environ['NZBPP_DIRECTORY']} doesn't exist; skipping."
+    )
     sys.exit(POSTPROCESS_NONE)
 
-# Check par and unpack status for errors
-if (
-    os.environ["NZBPP_PARSTATUS"] == "1"
-    or os.environ["NZBPP_PARSTATUS"] == "4"
-    or os.environ["NZBPP_UNPACKSTATUS"] == "1"
-):
-    print('[WARNING] Download of "%s" has failed, exiting' % (os.environ["NZBPP_NZBNAME"]))
+# Check download status for errors
+if totalstatus and totalstatus != "SUCCESS":
+    print(f'[WARNING] Download of {os.environ["NZBPP_NZBNAME"]} has failed; skipping.')
     sys.exit(POSTPROCESS_NONE)
+
 
 # Check if all required script config options are present in config file
 required_options = (
