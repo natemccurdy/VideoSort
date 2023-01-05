@@ -72,14 +72,34 @@ def set_defaults():
     # properties of nzb-file
     os.environ["NZBPP_DIRECTORY"] = test_dir
     os.environ["NZBPP_NZBNAME"] = "test"
-    os.environ["NZBPP_PARSTATUS"] = "2"
-    os.environ["NZBPP_UNPACKSTATUS"] = "2"
+    os.environ["NZBPP_TOTALSTATUS"] = "SUCCESS"
     os.environ["NZBPP_CATEGORY"] = ""
 
     # pp-parameters of nzb-file, including DNZB-headers
     os.environ["NZBPR__DNZB_USENZBNAME"] = "no"
     os.environ["NZBPR__DNZB_PROPERNAME"] = ""
     os.environ["NZBPR__DNZB_EPISODENAME"] = ""
+
+
+def run_videosort():
+    """
+    Wrapper around running VideoSort.py and returning the result.
+    Returns: (stdout+stderr, exitcode)
+    """
+    proc = subprocess.Popen(
+        ["python", root_dir + "/VideoSort.py"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=os.environ.copy(),
+    )
+    out, err = proc.communicate()
+    out += err
+    out = out.decode()
+    ret = proc.returncode
+    if verbose:
+        print(f"Return code: {ret}")
+
+    return (out, ret)
 
 
 def run_test(testobj):
@@ -103,18 +123,7 @@ def run_test(testobj):
     if verbose:
         print("Executing...")
     sys.stdout.flush()
-    proc = subprocess.Popen(
-        ["python", root_dir + "/VideoSort.py"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=os.environ.copy(),
-    )
-    out, err = proc.communicate()
-    out += err
-    out = out.decode()
-    ret = proc.returncode
-    if verbose:
-        print("Return code: %i" % ret)
+    out, ret = run_videosort()
     success = False
     dest = ""
 
@@ -148,6 +157,46 @@ def run_test(testobj):
         print("destination: %s" % dest)
 
 
+def test_skip_failed_download():
+    """Test that VideoSort behaves correctly when the NZB download fails."""
+    set_defaults()
+    os.environ["NZBPP_TOTALSTATUS"] = "FAILURE"
+
+    out, ret = run_videosort()
+
+    if ret == 95:
+        print("Skip when download failed: SUCCESS")
+    else:
+        print("Skip when download failed: FAILURE")
+        print(out)
+        print(f"Return code: {ret}")
+        sys.exit(1)
+
+
+def test_skip_post_process_again():
+    """
+    Test that VideoSort behaves correctly when the running the post-process
+    again but the download was deleted.
+    """
+    set_defaults()
+    os.environ["NZBPP_TOTALSTATUS"] = "DELETED"
+
+    out, ret = run_videosort()
+
+    if ret == 95:
+        print("Skip when post-process again but deleted: SUCCESS")
+    else:
+        print("Skip when post-process again but deleted: FAILURE")
+        print(out)
+        print(f"Return code: {ret}")
+        sys.exit(1)
+
+
+# Test that we skip when needed.
+test_skip_failed_download()
+test_skip_post_process_again()
+
+# Test that downloads are sorted correctly.
 testdata = json.load(open(root_dir + "/testdata.json"))
 for testobj in testdata:
     if test_ids == [] or testobj["id"] in test_ids:
